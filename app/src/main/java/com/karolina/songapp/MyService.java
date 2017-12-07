@@ -156,7 +156,7 @@ public class MyService extends Service {
         return new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekbar, int progress, boolean input) {
-                if (input) {
+                if (input && mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
                 }
             }
