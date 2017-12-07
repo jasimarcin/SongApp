@@ -18,6 +18,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.karolina.musicplayer.R;
 
@@ -26,7 +27,7 @@ import java.io.IOException;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity {
 
     private static final int READ_EXTERNAL_STORAGE_REQUEST = 32354;
     public static final int PLAY = R.string.play;
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button stop;
     private RecyclerView recyclerView;
 
-    private MyService service;
+    private MyService musicService;
     private boolean bound = false;
 
     private MusicListAdapter musicListAdapter;
@@ -61,8 +62,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stop = findViewById(R.id.stop);
         recyclerView = findViewById(R.id.recycler_view);
 
-        playPause.setOnClickListener(this);
-        stop.setOnClickListener(this);
+        playPause.setOnClickListener(onPlayPauseClickListener());
+        stop.setOnClickListener(onStopClickListener());
 
         initRecyclerView();
     }
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onItemClick(Uri uri) {
                 try {
-                    service.setSong(uri);
+                    musicService.setSong(uri);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -97,31 +98,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         musicListAdapter.setFilesList(musicFilesHelper.getFilesList());
 
         Intent intent = new Intent(this, MyService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
-    @Override
-    public void onClick(View view) {
-
-        service.setSeekBar(seekBar);
-
-        if (view == playPause) {
-
-            if (MyService.isPlaying) {
-                service.pauseMusic();
-            } else {
-                service.playMusic();
+    public View.OnClickListener onStopClickListener() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callStopMusic();
+                updatePlayPauseButton();
             }
+        };
+    }
 
-        } else if (view == stop) {
-            service.stopMusic();
+    private void callStopMusic() {
+        musicService.stopMusic();
+    }
+
+    public View.OnClickListener onPlayPauseClickListener() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (musicService.isPlaying()) {
+                    callPauseMusic();
+                } else {
+                    callPlayMusic();
+                }
+
+                updatePlayPauseButton();
+            }
+        };
+    }
+
+    private void callPauseMusic() {
+        musicService.pauseMusic();
+    }
+
+    private void callPlayMusic() {
+        if (!musicService.playMusic()) {
+            Toast.makeText(MainActivity.this, "Select file to play", Toast.LENGTH_LONG).show();
         }
-
-        updatePlayPauseButton();
     }
 
     private void updatePlayPauseButton() {
-        if (MyService.isPlaying)
+        if (musicService.isPlaying())
             playPause.setText(getString(PAUSE));
         else
             playPause.setText(getString(PLAY));
@@ -131,17 +151,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStop() {
         super.onStop();
         if (bound) {
-            unbindService(mConnection);
+            unbindService(serviceConnection);
             bound = false;
         }
     }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private ServiceConnection serviceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             MyService.LocalBinder binder = (MyService.LocalBinder) service;
-            MainActivity.this.service = binder.getService();
+            MainActivity.this.musicService = binder.getService();
+            MainActivity.this.musicService.setupSeekBar(seekBar);
             bound = true;
         }
 

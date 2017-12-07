@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.widget.SeekBar;
 
 import java.io.IOException;
@@ -16,25 +17,23 @@ import java.io.IOException;
 public class MyService extends Service {
 
     public static final int DELAY_MILLIS = 1000;
+    public static final int START_PROGRESS = 0;
     private Handler handler = new Handler();
     private MediaPlayer mediaPlayer;
     private SeekBar seekBar;
     private final IBinder mBinder = (IBinder) new LocalBinder();
     Runnable runnable;
 
-    static boolean isPlaying = false;
+    private boolean isInited = false;
+    private boolean isPlaying = false;
 
     @Override
     public void onCreate() {
-
         handler = new Handler();
-
-
     }
 
     public class LocalBinder extends Binder {
         MyService getService() {
-            //zwracamy instancje serwisu, przez nią odwołamy się następnie do metod.
             return MyService.this;
         }
     }
@@ -51,20 +50,52 @@ public class MyService extends Service {
             mediaPlayer.prepare();
         }
 
+        mediaPlayer.setOnCompletionListener(getOnCompletionListener());
+        mediaPlayer.setOnSeekCompleteListener(getOnSeekCompleteListener());
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mediaPlayer.setLooping(false);
+        seekBar.setMax(mediaPlayer.getDuration());
+    }
+
+    @NonNull
+    private MediaPlayer.OnSeekCompleteListener getOnSeekCompleteListener() {
+        return new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                callOnFInishPlaying();
+            }
+        };
+    }
+
+    @NonNull
+    private MediaPlayer.OnCompletionListener getOnCompletionListener() {
+        return new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                callOnFInishPlaying();
+            }
+        };
+    }
+
+    private void callOnFInishPlaying() {
+        isPlaying = false;
+        seekBar.setProgress(START_PROGRESS);
     }
 
     private boolean initMediaPlayer(Uri song) {
         if (mediaPlayer != null)
             return false;
 
+        isInited = true;
         mediaPlayer = MediaPlayer.create(getApplicationContext(), song);
+
         return true;
     }
 
-    //metoda którą zapewniamy.
-    public void playMusic() {
+    public boolean playMusic() {
+        if (!isInited)
+            return false;
+
         handler.post(new Runnable() {
             public void run() {
                 mediaPlayer.start();
@@ -72,6 +103,8 @@ public class MyService extends Service {
                 isPlaying = true;
             }
         });
+
+        return true;
     }
 
     public void pauseMusic() {
@@ -97,12 +130,14 @@ public class MyService extends Service {
         });
     }
 
-    public void setSeekBar(SeekBar seekBar) {
+    public void setupSeekBar(SeekBar seekBar) {
         this.seekBar = seekBar;
+        seekBar.setOnSeekBarChangeListener(getOnSeekBarChangeListener());
+    }
 
-        seekBar.setMax(mediaPlayer.getDuration());
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+    @NonNull
+    private SeekBar.OnSeekBarChangeListener getOnSeekBarChangeListener() {
+        return new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekbar, int progress, boolean input) {
                 if (input) {
@@ -119,9 +154,7 @@ public class MyService extends Service {
             public void onStopTrackingTouch(SeekBar seekBar) {
 
             }
-        });
-
-
+        };
     }
 
     public void playCycle() {
@@ -138,4 +171,7 @@ public class MyService extends Service {
         }
     }
 
+    public boolean isPlaying() {
+        return isPlaying;
+    }
 }
