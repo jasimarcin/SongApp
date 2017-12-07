@@ -1,6 +1,7 @@
 package com.karolina.songapp;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -92,14 +93,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
 
         requestForPermission(READ_EXTERNAL_STORAGE);
-        musicListAdapter.setFilesList(musicFilesHelper.getFilesList());
+        bindPlayingService();
+    }
 
+    private void bindPlayingService() {
         Intent intent = new Intent(this, MyService.class);
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        if (isMyServiceRunning(MyService.class))
+            bindService(intent, serviceConnection, 0);
+        else
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public View.OnClickListener onStopClickListener() {
@@ -147,12 +164,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
         if (bound) {
             unbindService(serviceConnection);
             bound = false;
         }
+
+        super.onDestroy();
     }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -188,7 +206,19 @@ public class MainActivity extends AppCompatActivity {
             if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS)) {
                 ActivityCompat.requestPermissions(this, new String[]{permission}, READ_EXTERNAL_STORAGE_REQUEST);
             }
+        } else {
+            loadData();
         }
+    }
+
+    private void loadData() {
+        musicListAdapter.setFilesList(musicFilesHelper.getFilesList());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                musicListAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
@@ -197,6 +227,8 @@ public class MainActivity extends AppCompatActivity {
             case READ_EXTERNAL_STORAGE_REQUEST: {
                 if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     finish();
+                } else {
+                    loadData();
                 }
             }
         }

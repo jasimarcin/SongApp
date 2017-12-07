@@ -26,11 +26,11 @@ public class MyService extends Service {
 
     public static final int DELAY_MILLIS = 50;
     public static final int START_PROGRESS = 0;
-    private Handler handler = new Handler();
+
     private MediaPlayer mediaPlayer;
+    private Handler handler = new Handler();
     private SeekBar seekBar;
     private final IBinder mBinder = (IBinder) new LocalBinder();
-    Runnable runnable;
 
     private PlayingStatusChange playingStatusChange;
     private boolean isInited = false;
@@ -177,7 +177,7 @@ public class MyService extends Service {
         seekBar.setProgress(mediaPlayer.getCurrentPosition());
 
         if (mediaPlayer.isPlaying()) {
-            runnable = new Runnable() {
+            Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
                     playCycle();
