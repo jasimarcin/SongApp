@@ -4,5 +4,6 @@
     <string name="play">PLAY</string>
     <string name="stop">STOP</string>
     <string name="pause">PAUSE</string>
+    <string name="select_file_to_play">Select file to play</string>
 
 </resources>

@@ -30,6 +30,7 @@ import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 public class MainActivity extends AppCompatActivity {
 
     private static final int READ_EXTERNAL_STORAGE_REQUEST = 32354;
+    public static final int SELECT_FILE_TO_PLAY = R.string.select_file_to_play;
     public static final int PLAY = R.string.play;
     public static final int PAUSE = R.string.pause;
 
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(Uri uri) {
                 try {
                     musicService.setSong(uri);
+                    musicService.playMusic();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -94,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         requestForPermission(READ_EXTERNAL_STORAGE);
-
         musicListAdapter.setFilesList(musicFilesHelper.getFilesList());
 
         Intent intent = new Intent(this, MyService.class);
@@ -106,13 +107,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 callStopMusic();
-                updatePlayPauseButton();
             }
         };
     }
 
     private void callStopMusic() {
         musicService.stopMusic();
+        updatePlayPauseButton();
     }
 
     public View.OnClickListener onPlayPauseClickListener() {
@@ -124,20 +125,21 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     callPlayMusic();
                 }
-
-                updatePlayPauseButton();
             }
         };
     }
 
     private void callPauseMusic() {
         musicService.pauseMusic();
+        updatePlayPauseButton();
     }
 
     private void callPlayMusic() {
         if (!musicService.playMusic()) {
-            Toast.makeText(MainActivity.this, "Select file to play", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, SELECT_FILE_TO_PLAY, Toast.LENGTH_SHORT).show();
         }
+
+        updatePlayPauseButton();
     }
 
     private void updatePlayPauseButton() {
