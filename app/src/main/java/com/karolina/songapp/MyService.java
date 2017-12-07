@@ -16,6 +16,14 @@ import java.io.IOException;
 
 public class MyService extends Service {
 
+    public interface PlayingStatusChange {
+        void onPlayStatusChangeListener(int status);
+    }
+
+    public static final int IS_PLAYING = 1;
+    public static final int IS_STOPPED = 2;
+    public static final int IS_PAUSED = 3;
+
     public static final int DELAY_MILLIS = 1000;
     public static final int START_PROGRESS = 0;
     private Handler handler = new Handler();
@@ -24,8 +32,9 @@ public class MyService extends Service {
     private final IBinder mBinder = (IBinder) new LocalBinder();
     Runnable runnable;
 
+    private PlayingStatusChange playingStatusChange;
     private boolean isInited = false;
-    private boolean isPlaying = false;
+    private int isPlaying = IS_STOPPED;
 
     @Override
     public void onCreate() {
@@ -62,7 +71,7 @@ public class MyService extends Service {
         return new MediaPlayer.OnSeekCompleteListener() {
             @Override
             public void onSeekComplete(MediaPlayer mp) {
-                callOnFInishPlaying();
+                callOnFinishPlaying();
             }
         };
     }
@@ -72,13 +81,13 @@ public class MyService extends Service {
         return new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                callOnFInishPlaying();
+                callOnFinishPlaying();
             }
         };
     }
 
-    private void callOnFInishPlaying() {
-        isPlaying = false;
+    private void callOnFinishPlaying() {
+        setIsPlaying(IS_STOPPED);
         seekBar.setProgress(START_PROGRESS);
     }
 
@@ -100,11 +109,18 @@ public class MyService extends Service {
             public void run() {
                 mediaPlayer.start();
                 playCycle();
-                isPlaying = true;
+                MyService.this.setIsPlaying(IS_PLAYING);
             }
         });
 
         return true;
+    }
+
+    private void setIsPlaying(int isPlaying) {
+        this.isPlaying = isPlaying;
+
+        if (playingStatusChange != null)
+            playingStatusChange.onPlayStatusChangeListener(isPlaying);
     }
 
     public void pauseMusic() {
@@ -113,7 +129,7 @@ public class MyService extends Service {
 
                 try {
                     mediaPlayer.pause();
-                    isPlaying = false;
+                    setIsPlaying(IS_PAUSED);
                 } catch (NullPointerException e) {
                 }
             }
@@ -125,7 +141,7 @@ public class MyService extends Service {
             public void run() {
                 mediaPlayer.pause();
                 mediaPlayer.seekTo(0);
-                isPlaying = false;
+                setIsPlaying(IS_STOPPED);
             }
         });
     }
@@ -171,7 +187,11 @@ public class MyService extends Service {
         }
     }
 
-    public boolean isPlaying() {
+    public int isPlaying() {
         return isPlaying;
+    }
+
+    public void setPlayingStatusChange(PlayingStatusChange playingStatusChange) {
+        this.playingStatusChange = playingStatusChange;
     }
 }

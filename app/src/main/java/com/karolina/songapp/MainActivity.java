@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (musicService.isPlaying()) {
+                if (musicService.isPlaying() == MyService.IS_PLAYING) {
                     callPauseMusic();
                 } else {
                     callPlayMusic();
@@ -131,19 +131,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void callPauseMusic() {
         musicService.pauseMusic();
-        updatePlayPauseButton();
     }
 
     private void callPlayMusic() {
         if (!musicService.playMusic()) {
             Toast.makeText(MainActivity.this, SELECT_FILE_TO_PLAY, Toast.LENGTH_SHORT).show();
         }
-
-        updatePlayPauseButton();
     }
 
     private void updatePlayPauseButton() {
-        if (musicService.isPlaying())
+        if (musicService.isPlaying() == MyService.IS_PLAYING)
             playPause.setText(getString(PAUSE));
         else
             playPause.setText(getString(PLAY));
@@ -165,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
             MyService.LocalBinder binder = (MyService.LocalBinder) service;
             MainActivity.this.musicService = binder.getService();
             MainActivity.this.musicService.setupSeekBar(seekBar);
+            MainActivity.this.musicService.setPlayingStatusChange(getPlayingStatusChange());
             bound = true;
         }
 
@@ -173,6 +171,16 @@ public class MainActivity extends AppCompatActivity {
             bound = false;
         }
     };
+
+    @NonNull
+    private MyService.PlayingStatusChange getPlayingStatusChange() {
+        return new MyService.PlayingStatusChange() {
+            @Override
+            public void onPlayStatusChangeListener(int status) {
+                updatePlayPauseButton();
+            }
+        };
+    }
 
     public void requestForPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
