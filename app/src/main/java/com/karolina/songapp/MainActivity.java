@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +21,7 @@ import android.widget.SeekBar;
 
 import com.karolina.musicplayer.R;
 
-import java.util.List;
+import java.io.IOException;
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
@@ -35,8 +37,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button stop;
     private RecyclerView recyclerView;
 
-    private MyService mService;
-    private boolean mBound = false;
+    private MyService service;
+    private boolean bound = false;
 
     private MusicListAdapter musicListAdapter;
     private MusicFilesHelper musicFilesHelper;
@@ -69,6 +71,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(musicListAdapter);
+        musicListAdapter.setOnItemClick(getOnSongClickListener());
+    }
+
+    @NonNull
+    private MusicListAdapter.OnItemClick getOnSongClickListener() {
+        return new MusicListAdapter.OnItemClick() {
+            @Override
+            public void onItemClick(Uri uri) {
+                try {
+                    service.setSong(uri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
     }
 
     @Override
@@ -86,18 +103,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
 
-        mService.setSeekBar(seekBar);
+        service.setSeekBar(seekBar);
 
         if (view == playPause) {
 
             if (MyService.isPlaying) {
-                mService.pauseMusic();
+                service.pauseMusic();
             } else {
-                mService.playMusic();
+                service.playMusic();
             }
 
         } else if (view == stop) {
-            mService.stopMusic();
+            service.stopMusic();
         }
 
         updatePlayPauseButton();
@@ -113,26 +130,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onStop() {
         super.onStop();
-        if (mBound) {
+        if (bound) {
             unbindService(mConnection);
-            mBound = false;
+            bound = false;
         }
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-
+        public void onServiceConnected(ComponentName className, IBinder service) {
             MyService.LocalBinder binder = (MyService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
+            MainActivity.this.service = binder.getService();
+            bound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
+            bound = false;
         }
     };
 

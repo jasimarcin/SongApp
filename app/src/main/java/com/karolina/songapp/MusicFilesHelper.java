@@ -40,7 +40,7 @@ public class MusicFilesHelper {
             while (externalCursor.moveToNext()) {
                 String url = externalCursor.getString(externalCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = externalCursor.getString(externalCursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                musicFilesList.add(new MusicItem(title, url));
+                musicFilesList.add(new MusicItem(title, Uri.parse(url)));
             }
     }
 

@@ -1,6 +1,7 @@
 package com.karolina.songapp;
 
 
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,18 +15,40 @@ import java.util.List;
 
 public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.MusicItemViewHolder> {
 
+    public interface OnItemClick {
+        void onItemClick(Uri uri);
+    }
+
     private List<MusicItem> filesList;
+    private OnItemClick onItemClick;
 
     public MusicListAdapter() {
         this.filesList = new ArrayList<>();
     }
 
     @Override
-    public MusicItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MusicItemViewHolder onCreateViewHolder(ViewGroup parent, final int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.music_list_row, parent, false);
 
+        setOnRowClickListener(viewType, itemView);
+
         return new MusicItemViewHolder(itemView);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
+    }
+
+    private void setOnRowClickListener(final int viewType, View itemView) {
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (onItemClick != null)
+                    onItemClick.onItemClick(filesList.get(viewType).getUri());
+            }
+        });
     }
 
     @Override
@@ -41,6 +64,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.Musi
     public void setFilesList(List<MusicItem> list) {
         if (list != null)
             filesList = list;
+    }
+
+    public void setOnItemClick(OnItemClick onItemClick) {
+        this.onItemClick = onItemClick;
     }
 
     public class MusicItemViewHolder extends RecyclerView.ViewHolder {

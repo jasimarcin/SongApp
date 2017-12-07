@@ -1,14 +1,16 @@
 package com.karolina.songapp;
 
 
+import android.net.Uri;
+
 public class MusicItem {
 
     private String name;
-    private String url;
+    private Uri uri;
 
-    public MusicItem(String name, String url) {
+    public MusicItem(String name, Uri uri) {
         this.name = name;
-        this.url = url;
+        this.uri = uri;
     }
 
     public String getName() {
@@ -19,11 +21,11 @@ public class MusicItem {
         this.name = name;
     }
 
-    public String getUrl() {
-        return url;
+    public Uri getUri() {
+        return uri;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setUri(Uri uri) {
+        this.uri = uri;
     }
 }

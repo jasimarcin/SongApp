@@ -4,13 +4,13 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
 import android.widget.SeekBar;
 
-import com.karolina.musicplayer.R;
+import java.io.IOException;
 
 
 public class MyService extends Service {
@@ -29,9 +29,7 @@ public class MyService extends Service {
 
         handler = new Handler();
 
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.hari);
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mediaPlayer.setLooping(true);
+
     }
 
     public class LocalBinder extends Binder {
@@ -44,6 +42,25 @@ public class MyService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
+    }
+
+    public void setSong(Uri song) throws IOException {
+        if (!initMediaPlayer(song)) {
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(this, song);
+            mediaPlayer.prepare();
+        }
+
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setLooping(false);
+    }
+
+    private boolean initMediaPlayer(Uri song) {
+        if (mediaPlayer != null)
+            return false;
+
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), song);
+        return true;
     }
 
     //metoda którą zapewniamy.
@@ -69,6 +86,7 @@ public class MyService extends Service {
             }
         });
     }
+
     public void stopMusic() {
         handler.post(new Runnable() {
             public void run() {
@@ -79,18 +97,15 @@ public class MyService extends Service {
         });
     }
 
-    public void setSeekBar(SeekBar seekBar)
-    {
+    public void setSeekBar(SeekBar seekBar) {
         this.seekBar = seekBar;
 
         seekBar.setMax(mediaPlayer.getDuration());
 
-
-
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekbar, int progress, boolean input) {
-                if(input){
+                if (input) {
                     mediaPlayer.seekTo(progress);
                 }
             }
@@ -109,10 +124,10 @@ public class MyService extends Service {
 
     }
 
-    public void playCycle(){
+    public void playCycle() {
         seekBar.setProgress(mediaPlayer.getCurrentPosition());
 
-        if(mediaPlayer.isPlaying()){
+        if (mediaPlayer.isPlaying()) {
             runnable = new Runnable() {
                 @Override
                 public void run() {
