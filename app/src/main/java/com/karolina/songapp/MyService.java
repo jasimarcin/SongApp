@@ -24,7 +24,7 @@ public class MyService extends Service {
     public static final int IS_STOPPED = 2;
     public static final int IS_PAUSED = 3;
 
-    public static final int DELAY_MILLIS = 1000;
+    public static final int DELAY_MILLIS = 50;
     public static final int START_PROGRESS = 0;
     private Handler handler = new Handler();
     private MediaPlayer mediaPlayer;
@@ -126,11 +126,11 @@ public class MyService extends Service {
     public void pauseMusic() {
         handler.post(new Runnable() {
             public void run() {
-
                 try {
                     mediaPlayer.pause();
                     setIsPlaying(IS_PAUSED);
                 } catch (NullPointerException e) {
+                    e.printStackTrace();
                 }
             }
         });
