@@ -3,6 +3,7 @@ package com.karolina.songapp;
 
 import android.net.Uri;
 
+// music item model
 public class MusicItem {
 
     private String name;

@@ -100,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
         bindPlayingService();
     }
 
+    // if servise exist then just bind it
+    // otherside if not exist create new one instance
     private void bindPlayingService() {
         Intent intent = new Intent(this, MyService.class);
 
@@ -109,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
             bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    // check if servise exist
     private boolean isMyServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
@@ -190,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // better is to react to changes no to update before
     @NonNull
     private MyService.PlayingStatusChange getPlayingStatusChange() {
         return new MyService.PlayingStatusChange() {
@@ -200,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    // request for permission if need (example from datasheet)
     public void requestForPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
 
@@ -221,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // callback from granted permission
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {

@@ -70,6 +70,8 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.Musi
         this.onItemClick = onItemClick;
     }
 
+    // viewHolder pattern
+    // for holding current view state
     public class MusicItemViewHolder extends RecyclerView.ViewHolder {
 
         private TextView title;

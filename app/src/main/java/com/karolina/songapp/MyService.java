@@ -52,6 +52,8 @@ public class MyService extends Service {
         return mBinder;
     }
 
+    // set new song
+    // create media player if not exist
     public void setSong(Uri song) throws IOException {
         if (!initMediaPlayer(song)) {
             mediaPlayer.reset();

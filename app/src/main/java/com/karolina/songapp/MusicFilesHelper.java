@@ -33,6 +33,8 @@ public class MusicFilesHelper {
         return musicFilesList;
     }
 
+    // query database for music files
+    // internal and external storage
     private void loadDataFromUri(List<MusicItem> musicFilesList, Uri uri) {
         Cursor externalCursor = contentResolver.query(uri, null, SELECTION, null, SORT_ORDER);
 
